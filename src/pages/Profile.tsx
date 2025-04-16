@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,10 @@ import {
   BarChart2,
 } from "lucide-react";
 import ArticleCard from "@/components/articles/ArticleCard";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
-// Mock user data
-const userData = {
+// Default user data as fallback
+const defaultUserData = {
   id: "user1",
   name: "Sarah Johnson",
   username: "sarahjohnson",
@@ -103,9 +103,37 @@ const userArticles = [
 ];
 
 export default function Profile() {
-  const [isAuthenticated] = useState(true);
-  const [isCurrentUser] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCurrentUser, setIsCurrentUser] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [userData, setUserData] = useState(defaultUserData);
+  const { id } = useParams();
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const storedUser = localStorage.getItem("techoh-user");
+    
+    if (storedUser) {
+      setIsAuthenticated(true);
+      const parsedUser = JSON.parse(storedUser);
+      
+      // If viewing someone else's profile
+      if (id && id !== parsedUser.id) {
+        setIsCurrentUser(false);
+        // Here we would fetch the other user's profile data
+        // For now we'll use the default data
+      } else {
+        // Merge the stored user data with default data for properties that might be missing
+        setUserData({
+          ...defaultUserData,
+          ...parsedUser
+        });
+        setIsCurrentUser(true);
+      }
+    } else {
+      setIsAuthenticated(false);
+    }
+  }, [id]);
 
   return (
     <Layout isAuthenticated={isAuthenticated}>

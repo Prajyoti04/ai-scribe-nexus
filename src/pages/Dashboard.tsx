@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +18,7 @@ import {
   Clock,
   CalendarDays
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -105,7 +104,25 @@ const recentActivity = [
 ];
 
 export default function Dashboard() {
-  const [isAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is logged in
+    const storedUser = localStorage.getItem("techoh-user");
+    if (storedUser) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(storedUser));
+    } else {
+      // Redirect to login if not authenticated
+      navigate("/login");
+    }
+  }, [navigate]);
+
+  if (!isAuthenticated || !user) {
+    return null; // Don't render anything until authentication check is complete
+  }
 
   return (
     <Layout isAuthenticated={isAuthenticated}>
@@ -114,7 +131,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground">
-              Manage your articles and track your performance
+              Welcome back, {user.name}! Manage your articles and track your performance
             </p>
           </div>
           <div className="mt-4 flex flex-wrap gap-3 md:mt-0">

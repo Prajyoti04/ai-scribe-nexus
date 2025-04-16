@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Github, Twitter } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthFormProps {
   type: "login" | "register";
@@ -15,6 +16,7 @@ interface AuthFormProps {
 
 export default function AuthForm({ type }: AuthFormProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,14 +32,29 @@ export default function AuthForm({ type }: AuthFormProps) {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
-      // Normally, this is where you would make an actual authentication API call
-      if (type === "login") {
-        // Simulate successful login
-        navigate("/dashboard");
-      } else {
-        // Simulate successful registration
-        navigate("/dashboard");
-      }
+      // Create a user object to be stored in localStorage
+      const user = {
+        id: "user1",
+        name: type === "register" ? name : "Sarah Johnson",
+        username: type === "register" ? name.toLowerCase().replace(/\s/g, "") : "sarahjohnson",
+        email: email,
+        avatar: "https://i.pravatar.cc/150?img=32",
+        bio: "Senior Software Engineer | Tech Enthusiast",
+        location: "San Francisco, CA",
+        joinedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" }),
+      };
+      
+      // Store user data in localStorage
+      localStorage.setItem("techoh-user", JSON.stringify(user));
+      
+      // Show success toast
+      toast({
+        title: type === "login" ? "Successfully signed in!" : "Account created successfully!",
+        description: "Welcome to Tech-OH Blog",
+      });
+      
+      // Navigate to dashboard
+      navigate("/dashboard");
     } catch (err) {
       setError("Authentication failed. Please check your credentials and try again.");
     } finally {

@@ -3,7 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -13,6 +14,23 @@ import ArticleView from "./pages/ArticleView";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+// Protected route component
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    const user = localStorage.getItem("techoh-user");
+    setIsAuthenticated(!!user);
+  }, []);
+
+  if (isAuthenticated === null) {
+    // Still checking authentication
+    return null;
+  }
+  
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -24,10 +42,38 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/:id" element={<Profile />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/create" element={<ArticleCreate />} />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile/:id" 
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/create" 
+            element={
+              <ProtectedRoute>
+                <ArticleCreate />
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/article/:id" element={<ArticleView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

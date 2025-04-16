@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +12,7 @@ import {
   Bookmark,
   BarChart2
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,13 +21,52 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
 }
 
+interface User {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  avatar: string;
+}
+
 export default function Navbar({ isAuthenticated = false }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Retrieve user data from localStorage
+    const storedUser = localStorage.getItem("techoh-user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem("techoh-user");
+    setUser(null);
+    
+    // Show toast notification
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account",
+    });
+    
+    // Redirect to homepage
+    navigate("/");
+  };
+
+  // Determine authentication status based on user data
+  const userIsAuthenticated = Boolean(user) || isAuthenticated;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-md">
@@ -72,7 +110,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
             />
           </div>
 
-          {isAuthenticated ? (
+          {userIsAuthenticated ? (
             <>
               <Button variant="ghost" size="icon" className="hidden md:inline-flex relative">
                 <Bell size={20} />
@@ -90,8 +128,8 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                      <AvatarFallback>TC</AvatarFallback>
+                      <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={user?.name || "User"} />
+                      <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
@@ -99,13 +137,13 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
                   <div className="flex items-center justify-start gap-2 p-2">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                        <AvatarFallback>TC</AvatarFallback>
+                        <AvatarImage src={user?.avatar || "https://github.com/shadcn.png"} alt={user?.name || "User"} />
+                        <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
                       </Avatar>
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Tech Creator</p>
-                      <p className="text-xs text-muted-foreground">techcreator@example.com</p>
+                      <p className="text-sm font-medium">{user?.name || "Tech Creator"}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email || "techcreator@example.com"}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />
@@ -134,7 +172,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="flex cursor-pointer items-center text-destructive focus:text-destructive">
+                  <DropdownMenuItem className="flex cursor-pointer items-center text-destructive focus:text-destructive" onClick={handleLogout}>
                     <LogOut size={16} className="mr-2" />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -185,7 +223,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
               <Link to="/authors" className="px-2 py-2 hover:bg-muted rounded-md">Authors</Link>
             </div>
 
-            {isAuthenticated ? (
+            {userIsAuthenticated ? (
               <div className="flex flex-col space-y-2 pt-2 border-t border-border/40">
                 <Link to="/notifications" className="px-2 py-2 hover:bg-muted rounded-md flex items-center">
                   <Bell size={16} className="mr-2" />
