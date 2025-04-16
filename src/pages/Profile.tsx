@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -54,6 +53,65 @@ export default function Profile() {
   const [userArticles, setUserArticles] = useState([]);
   const { id } = useParams();
 
+  // Define mock articles for the user
+  const mockArticles = [
+    {
+      id: "1",
+      title: "Getting Started with Kubernetes",
+      excerpt: "A beginner's guide to understanding and deploying Kubernetes clusters",
+      cover: `https://images.unsplash.com/photo-1649972904349-6e44c42644a7`, // Using a placeholder image
+      author: {
+        name: "Sarah Johnson",
+        avatar: "https://i.pravatar.cc/150?img=32",
+        id: "user1"
+      },
+      publishDate: "April 15, 2025",
+      readTime: 7,
+      tags: ["kubernetes", "devops", "cloud"],
+      likes: 142,
+      views: 3526,
+      comments: 24,
+      trending: true,
+      aiEnhanced: true
+    },
+    {
+      id: "2",
+      title: "Advanced React Performance Optimization",
+      excerpt: "Techniques to improve your React application's rendering and load times",
+      cover: `https://images.unsplash.com/photo-1488590528505-98d2b5aba04b`, // Using a placeholder image
+      author: {
+        name: "Sarah Johnson",
+        avatar: "https://i.pravatar.cc/150?img=32",
+        id: "user1"
+      },
+      publishDate: "March 22, 2025",
+      readTime: 5,
+      tags: ["react", "performance", "web-development"],
+      likes: 87,
+      views: 2103,
+      comments: 15,
+      aiEnhanced: true
+    },
+    {
+      id: "3",
+      title: "Building Scalable Microservices with Go",
+      excerpt: "Design patterns and best practices for creating robust microservice architectures",
+      cover: `https://images.unsplash.com/photo-1461749280684-dccba630e2f6`, // Using a placeholder image
+      author: {
+        name: "Sarah Johnson",
+        avatar: "https://i.pravatar.cc/150?img=32",
+        id: "user1"
+      },
+      publishDate: "February 10, 2025",
+      readTime: 9,
+      tags: ["go", "microservices", "backend"],
+      likes: 213,
+      views: 4507,
+      comments: 37,
+      trending: true
+    }
+  ];
+
   useEffect(() => {
     // Get user data from localStorage
     const storedUser = localStorage.getItem("techoh-user");
@@ -87,7 +145,16 @@ export default function Profile() {
     } else {
       setIsAuthenticated(false);
     }
-  }, [id]);
+
+    // When it's the current user's profile, set the mock articles
+    if (isCurrentUser) {
+      setUserData(prevUser => ({
+        ...prevUser,
+        articles: mockArticles.length
+      }));
+      setUserArticles(mockArticles);
+    }
+  }, [id, isCurrentUser]);
 
   return (
     <Layout isAuthenticated={isAuthenticated}>
