@@ -75,6 +75,15 @@ const App = () => (
             } 
           />
           <Route path="/article/:id" element={<ArticleView />} />
+          {/* Temporarily redirect Edit Profile requests to dashboard since we don't have that page yet */}
+          <Route 
+            path="/edit-profile" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

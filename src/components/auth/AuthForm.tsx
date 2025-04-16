@@ -42,6 +42,10 @@ export default function AuthForm({ type }: AuthFormProps) {
         bio: "Senior Software Engineer | Tech Enthusiast",
         location: "San Francisco, CA",
         joinedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" }),
+        articles: 0, // Initialize with 0 articles
+        followers: 0, // Initialize with 0 followers
+        following: 0, // Initialize with 0 following
+        badges: [] // Initialize with empty badges array
       };
       
       // Store user data in localStorage

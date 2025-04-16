@@ -19,6 +19,7 @@ import {
   BookOpen,
   Users,
   BarChart2,
+  PenLine,
 } from "lucide-react";
 import ArticleCard from "@/components/articles/ArticleCard";
 import { Link, useParams } from "react-router-dom";
@@ -38,75 +39,19 @@ const defaultUserData = {
   linkedin: "sarah-johnson",
   followers: 342,
   following: 128,
-  articles: 12,
+  articles: 0,
   badges: [
     { name: "Top Contributor", description: "Consistently writes high-quality content" },
     { name: "Kubernetes Expert", description: "Published multiple highly-rated Kubernetes articles" },
   ]
 };
 
-// Mock articles data
-const userArticles = [
-  {
-    id: "1",
-    title: "Building Scalable Microservices with Go and Kubernetes in 2025",
-    excerpt: "Learn how to design and implement a highly scalable microservice architecture using Go, Kubernetes, and the latest cloud-native technologies.",
-    cover: "https://images.unsplash.com/photo-1593720219276-0b1eacd0aef4?q=80&w=1080&auto=format&fit=crop",
-    author: {
-      name: "Sarah Johnson",
-      avatar: "https://i.pravatar.cc/150?img=32",
-      id: "sarah-johnson"
-    },
-    publishDate: "Apr 15, 2025",
-    readTime: 12,
-    tags: ["golang", "kubernetes", "microservices", "cloud"],
-    likes: 1254,
-    views: 24689,
-    comments: 87,
-    aiEnhanced: true
-  },
-  {
-    id: "7",
-    title: "Building Machine Learning Models with PyTorch 2.0",
-    excerpt: "Discover how PyTorch 2.0 is revolutionizing the way we build, train, and deploy machine learning models.",
-    cover: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=1080&auto=format&fit=crop",
-    author: {
-      name: "Sarah Johnson",
-      avatar: "https://i.pravatar.cc/150?img=32",
-      id: "sarah-johnson"
-    },
-    publishDate: "Apr 14, 2025",
-    readTime: 8,
-    tags: ["ml", "pytorch", "ai", "deep-learning"],
-    likes: 724,
-    views: 12540,
-    comments: 43,
-    aiEnhanced: true
-  },
-  {
-    id: "9",
-    title: "Serverless Architecture Patterns for Distributed Systems",
-    excerpt: "Explore modern serverless patterns for building distributed, highly-available systems at scale.",
-    cover: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=1080&auto=format&fit=crop",
-    author: {
-      name: "Sarah Johnson",
-      avatar: "https://i.pravatar.cc/150?img=32",
-      id: "sarah-johnson"
-    },
-    publishDate: "Apr 10, 2025",
-    readTime: 11,
-    tags: ["serverless", "aws", "architecture", "cloud"],
-    likes: 592,
-    views: 8954,
-    comments: 27
-  }
-];
-
 export default function Profile() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCurrentUser, setIsCurrentUser] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [userData, setUserData] = useState(defaultUserData);
+  const [userArticles, setUserArticles] = useState([]);
   const { id } = useParams();
 
   useEffect(() => {
@@ -122,13 +67,22 @@ export default function Profile() {
         setIsCurrentUser(false);
         // Here we would fetch the other user's profile data
         // For now we'll use the default data
+        
+        // For other users we would fetch their articles from an API
+        // For now we'll set articles to empty array
+        setUserArticles([]);
       } else {
         // Merge the stored user data with default data for properties that might be missing
-        setUserData({
+        const mergedUser = {
           ...defaultUserData,
-          ...parsedUser
-        });
+          ...parsedUser,
+          articles: 0 // Reset articles count as the user hasn't uploaded any
+        };
+        setUserData(mergedUser);
         setIsCurrentUser(true);
+        
+        // For the current user, set articles to empty array as they haven't uploaded any
+        setUserArticles([]);
       }
     } else {
       setIsAuthenticated(false);
@@ -165,7 +119,7 @@ export default function Profile() {
                       </Link>
                     </Button>
                     <Button className="gap-1" asChild>
-                      <Link to="/edit-profile">
+                      <Link to="/create">
                         <Edit size={16} className="mr-1" />
                         Edit Profile
                       </Link>
@@ -289,11 +243,30 @@ export default function Profile() {
           </TabsList>
 
           <TabsContent value="articles" className="space-y-8">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {userArticles.map((article) => (
-                <ArticleCard key={article.id} {...article} />
-              ))}
-            </div>
+            {userArticles.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {userArticles.map((article) => (
+                  <ArticleCard key={article.id} {...article} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-border/40 bg-card p-8 text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <PenLine className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <h3 className="mb-2 text-lg font-medium">No articles yet</h3>
+                <p className="mb-4 text-muted-foreground">
+                  {isCurrentUser
+                    ? "You haven't published any articles yet. Start writing to share your expertise!"
+                    : "This user hasn't published any articles yet."}
+                </p>
+                {isCurrentUser && (
+                  <Button asChild>
+                    <Link to="/create">Write your first article</Link>
+                  </Button>
+                )}
+              </div>
+            )}
 
             {userArticles.length > 9 && (
               <div className="flex justify-center">
