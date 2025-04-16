@@ -5,24 +5,24 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 256 15% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 256 15% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 256 15% 14%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 266 28% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 199 81% 57%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 266 86% 67%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -30,7 +30,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 266 28% 50%;
 
     --radius: 0.5rem;
 
@@ -97,5 +97,49 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-medium tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-techoh-purple to-techoh-blue bg-clip-text text-transparent;
+  }
+
+  .ai-highlight {
+    @apply border-l-4 border-techoh-blue bg-techoh-blue/5 px-4 py-2;
+  }
+
+  .badge-ai {
+    @apply bg-gradient-to-r from-techoh-blue to-techoh-purple text-white;
+  }
+
+  .badge-trending {
+    @apply bg-techoh-accent-orange text-white;
+  }
+
+  .badge-new {
+    @apply bg-techoh-accent-green text-white;
   }
 }

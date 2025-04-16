@@ -61,7 +61,33 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+                techoh: {
+                    purple: {
+                        DEFAULT: '#6E59A5',
+                        light: '#9b87f5',
+                        dark: '#483A6F',
+                    },
+                    blue: {
+                        DEFAULT: '#33C3F0',
+                        light: '#66D4F4',
+                        dark: '#0FA0CE',
+                    },
+                    charcoal: {
+                        DEFAULT: '#221F26',
+                        light: '#403E43',
+                    },
+                    gray: {
+                        DEFAULT: '#8E9196',
+                        light: '#F6F6F7',
+                        dark: '#555555',
+                    },
+                    accent: {
+                        purple: '#8B5CF6',
+                        green: '#10B981',
+                        orange: '#F97316',
+                    }
+                }
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
