@@ -14,6 +14,9 @@ import ArticleView from "./pages/ArticleView";
 import Users from "./pages/Users";
 import Trending from "./pages/Trending";
 import NotFound from "./pages/NotFound";
+import SavedArticles from "./pages/SavedArticles";
+import LatestArticles from "./pages/LatestArticles";
+import TopRatedArticles from "./pages/TopRatedArticles";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +25,21 @@ const initializeStorage = () => {
   // Initialize articles storage
   if (!localStorage.getItem("techoh-articles")) {
     localStorage.setItem("techoh-articles", JSON.stringify([]));
+  }
+  
+  // Initialize comments storage
+  if (!localStorage.getItem("techoh-comments")) {
+    localStorage.setItem("techoh-comments", JSON.stringify([]));
+  }
+  
+  // Initialize liked articles storage
+  if (!localStorage.getItem("techoh-liked-articles")) {
+    localStorage.setItem("techoh-liked-articles", JSON.stringify([]));
+  }
+  
+  // Initialize saved articles storage
+  if (!localStorage.getItem("techoh-saved-articles")) {
+    localStorage.setItem("techoh-saved-articles", JSON.stringify([]));
   }
 };
 
@@ -83,6 +101,16 @@ const App = () => (
           <Route path="/article/:id" element={<ArticleView />} />
           <Route path="/users" element={<Users />} />
           <Route path="/trending" element={<Trending />} />
+          <Route path="/latest" element={<LatestArticles />} />
+          <Route path="/top-rated" element={<TopRatedArticles />} />
+          <Route 
+            path="/bookmarks" 
+            element={
+              <ProtectedRoute>
+                <SavedArticles />
+              </ProtectedRoute>
+            } 
+          />
           {/* Temporarily redirect Edit Profile requests to dashboard since we don't have that page yet */}
           <Route 
             path="/edit-profile" 
