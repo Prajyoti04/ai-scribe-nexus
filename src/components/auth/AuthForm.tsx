@@ -14,6 +14,22 @@ interface AuthFormProps {
   type: "login" | "register";
 }
 
+// User structure for local storage
+interface User {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  avatar: string;
+  bio: string;
+  location: string;
+  joinedDate: string;
+  articles: number;
+  followers: number;
+  following: number;
+  badges: string[];
+}
+
 export default function AuthForm({ type }: AuthFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -32,35 +48,78 @@ export default function AuthForm({ type }: AuthFormProps) {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
-      // Create a user object to be stored in localStorage
-      const user = {
-        id: "user1",
-        name: type === "register" ? name : "Sarah Johnson",
-        username: type === "register" ? name.toLowerCase().replace(/\s/g, "") : "sarahjohnson",
-        email: email,
-        avatar: "https://i.pravatar.cc/150?img=32",
-        bio: "Senior Software Engineer | Tech Enthusiast",
-        location: "San Francisco, CA",
-        joinedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" }),
-        articles: 0, // Initialize with 0 articles
-        followers: 0, // Initialize with 0 followers
-        following: 0, // Initialize with 0 following
-        badges: [] // Initialize with empty badges array
-      };
-      
-      // Store user data in localStorage
-      localStorage.setItem("techoh-user", JSON.stringify(user));
-      
-      // Show success toast
-      toast({
-        title: type === "login" ? "Successfully signed in!" : "Account created successfully!",
-        description: "Welcome to Tech-OH Blog",
-      });
+      if (type === "login") {
+        // Check if user exists in localStorage
+        const users = JSON.parse(localStorage.getItem("techoh-users") || "[]");
+        const user = users.find((u: User) => u.email === email);
+        
+        if (!user) {
+          throw new Error("User not found. Please check your email or sign up.");
+        }
+        
+        // In a real app, we would verify the password here
+        // For this demo, we'll just simulate success
+        
+        // Set the current user
+        localStorage.setItem("techoh-user", JSON.stringify(user));
+        
+        toast({
+          title: "Successfully signed in!",
+          description: "Welcome back to Tech-OH Blog",
+        });
+      } else {
+        // Registration
+        // Generate a unique ID for the new user
+        const userId = `user_${Date.now()}`;
+        const username = name.toLowerCase().replace(/\s/g, "");
+        
+        // Create a user object
+        const newUser: User = {
+          id: userId,
+          name: name,
+          username: username,
+          email: email,
+          avatar: `https://i.pravatar.cc/150?u=${userId}`, // Random avatar based on user ID
+          bio: "Tech enthusiast and content creator",
+          location: "Tech-OH Community",
+          joinedDate: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long" }),
+          articles: 0, // Initialize with 0 articles
+          followers: 0, // Initialize with 0 followers
+          following: 0, // Initialize with 0 following
+          badges: [] // Initialize with empty badges array
+        };
+        
+        // Get existing users or initialize empty array
+        const existingUsers = JSON.parse(localStorage.getItem("techoh-users") || "[]");
+        
+        // Check if email already exists
+        if (existingUsers.some((user: User) => user.email === email)) {
+          throw new Error("Email already in use. Please try a different one or sign in.");
+        }
+        
+        // Add the new user to the array
+        existingUsers.push(newUser);
+        
+        // Save the updated array back to localStorage
+        localStorage.setItem("techoh-users", JSON.stringify(existingUsers));
+        
+        // Set the current user
+        localStorage.setItem("techoh-user", JSON.stringify(newUser));
+        
+        toast({
+          title: "Account created successfully!",
+          description: "Welcome to Tech-OH Blog",
+        });
+      }
       
       // Navigate to dashboard
       navigate("/dashboard");
     } catch (err) {
-      setError("Authentication failed. Please check your credentials and try again.");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Authentication failed. Please check your credentials and try again.");
+      }
     } finally {
       setIsLoading(false);
     }

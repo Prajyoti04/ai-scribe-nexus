@@ -10,7 +10,8 @@ import {
   LogOut,
   Settings,
   Bookmark,
-  BarChart2
+  BarChart2,
+  Users
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
@@ -79,8 +80,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
           
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/" className="text-foreground/80 hover:text-foreground">Home</Link>
-            <Link to="/trending" className="text-foreground/80 hover:text-foreground">Trending</Link>
-            <Link to="/topics" className="text-foreground/80 hover:text-foreground">Topics</Link>
+            <Link to="/users" className="text-foreground/80 hover:text-foreground">Members</Link>
             <DropdownMenu>
               <DropdownMenuTrigger className="inline-flex items-center text-foreground/80 hover:text-foreground">
                 Browse <ChevronDown size={16} className="ml-1" />
@@ -93,7 +93,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
                   <Link to="/top-rated">Top Rated</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/authors">Authors</Link>
+                  <Link to="/users">Community Members</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -216,11 +216,9 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
             
             <div className="flex flex-col space-y-2">
               <Link to="/" className="px-2 py-2 hover:bg-muted rounded-md">Home</Link>
-              <Link to="/trending" className="px-2 py-2 hover:bg-muted rounded-md">Trending</Link>
-              <Link to="/topics" className="px-2 py-2 hover:bg-muted rounded-md">Topics</Link>
+              <Link to="/users" className="px-2 py-2 hover:bg-muted rounded-md">Members</Link>
               <Link to="/latest" className="px-2 py-2 hover:bg-muted rounded-md">Latest Articles</Link>
               <Link to="/top-rated" className="px-2 py-2 hover:bg-muted rounded-md">Top Rated</Link>
-              <Link to="/authors" className="px-2 py-2 hover:bg-muted rounded-md">Authors</Link>
             </div>
 
             {userIsAuthenticated ? (

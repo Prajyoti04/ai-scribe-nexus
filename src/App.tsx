@@ -11,6 +11,8 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import ArticleCreate from "./pages/ArticleCreate";
 import ArticleView from "./pages/ArticleView";
+import Users from "./pages/Users";
+import Trending from "./pages/Trending";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,14 +52,7 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/profile/:id" 
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/profile/:id" element={<Profile />} />
           <Route 
             path="/dashboard" 
             element={
@@ -75,6 +70,8 @@ const App = () => (
             } 
           />
           <Route path="/article/:id" element={<ArticleView />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/trending" element={<Trending />} />
           {/* Temporarily redirect Edit Profile requests to dashboard since we don't have that page yet */}
           <Route 
             path="/edit-profile" 

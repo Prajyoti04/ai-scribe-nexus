@@ -2,55 +2,59 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { useParams, Link } from "react-router-dom";
 import {
-  Edit,
-  Settings,
-  User,
   MapPin,
   Calendar,
-  Twitter,
-  Github,
-  Linkedin,
-  Globe,
-  Award,
-  BookOpen,
-  Users,
-  BarChart2,
-  PenLine,
+  UserPlus,
+  ExternalLink,
+  Award
 } from "lucide-react";
-import ArticleCard from "@/components/articles/ArticleCard";
-import { Link, useParams } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
 
-// Default user data as fallback
+// Default user data
 const defaultUserData = {
-  id: "user1",
-  name: "Sarah Johnson",
-  username: "sarahjohnson",
-  avatar: "https://i.pravatar.cc/150?img=32",
-  bio: "Senior Software Engineer at TechCorp | Kubernetes & Go enthusiast | Writing about cloud-native technologies and distributed systems",
-  location: "San Francisco, CA",
-  joinedDate: "March 2024",
-  website: "https://sarahjohnson.dev",
-  twitter: "sarahjohnsondev",
-  github: "sarahjohnson",
-  linkedin: "sarah-johnson",
-  followers: 342,
-  following: 128,
+  id: "",
+  name: "",
+  username: "",
+  email: "",
+  avatar: "",
+  bio: "",
+  location: "",
+  joinedDate: "",
   articles: 0,
-  badges: [
-    { name: "Top Contributor", description: "Consistently writes high-quality content" },
-    { name: "Kubernetes Expert", description: "Published multiple highly-rated Kubernetes articles" },
-  ]
+  followers: 0,
+  following: 0,
+  badges: [] as string[]
 };
+
+interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  cover: string;
+  author: {
+    name: string;
+    avatar: string;
+    id: string;
+  };
+  publishDate: string;
+  readTime: number;
+  tags: string[];
+  likes: number;
+  views: number;
+  comments: number;
+  trending?: boolean;
+  aiEnhanced?: boolean;
+}
 
 export default function Profile() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isCurrentUser, setIsCurrentUser] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
   const [userData, setUserData] = useState(defaultUserData);
-  const [userArticles, setUserArticles] = useState([]);
+  const [userArticles, setUserArticles] = useState<Article[]>([]);
   const { id } = useParams();
 
   // Define mock articles for the user
@@ -114,36 +118,47 @@ export default function Profile() {
 
   useEffect(() => {
     // Get user data from localStorage
-    const storedUser = localStorage.getItem("techoh-user");
+    const currentUser = JSON.parse(localStorage.getItem("techoh-user") || "null");
     
-    if (storedUser) {
+    if (currentUser) {
       setIsAuthenticated(true);
-      const parsedUser = JSON.parse(storedUser);
       
-      // If viewing someone else's profile
-      if (id && id !== parsedUser.id) {
-        setIsCurrentUser(false);
-        // Here we would fetch the other user's profile data
-        // For now we'll use the default data
-        
-        // For other users we would fetch their articles from an API
-        // For now we'll set articles to empty array
-        setUserArticles([]);
-      } else {
-        // Merge the stored user data with default data for properties that might be missing
-        const mergedUser = {
-          ...defaultUserData,
-          ...parsedUser,
-          articles: 0 // Reset articles count as the user hasn't uploaded any
-        };
-        setUserData(mergedUser);
+      // If no ID is provided in the URL, show the current user's profile
+      if (!id) {
+        setUserData(currentUser);
         setIsCurrentUser(true);
-        
-        // For the current user, set articles to empty array as they haven't uploaded any
-        setUserArticles([]);
+      } else {
+        // If ID is provided, check if it matches the current user's ID
+        if (id === currentUser.id) {
+          setUserData(currentUser);
+          setIsCurrentUser(true);
+        } else {
+          // If ID doesn't match current user, find the user with that ID
+          const allUsers = JSON.parse(localStorage.getItem("techoh-users") || "[]");
+          const profileUser = allUsers.find((user: any) => user.id === id);
+          
+          if (profileUser) {
+            setUserData(profileUser);
+            setIsCurrentUser(false);
+          } else {
+            // If no user found with that ID, fallback to showing current user
+            setUserData(currentUser);
+            setIsCurrentUser(true);
+          }
+        }
       }
     } else {
       setIsAuthenticated(false);
+      
+      // If no user is logged in but ID is provided, try to find that user
+      if (id) {
+        const allUsers = JSON.parse(localStorage.getItem("techoh-users") || "[]");
+        const profileUser = allUsers.find((user: any) => user.id === id);
+        
+        if (profileUser) {
+          setUserData(profileUser);
+        }
+      }
     }
 
     // When it's the current user's profile, set the mock articles
@@ -158,222 +173,129 @@ export default function Profile() {
 
   return (
     <Layout isAuthenticated={isAuthenticated}>
-      <div className="container py-8">
-        {/* Profile header */}
-        <div className="mb-8 rounded-xl border border-border/40 bg-card">
-          <div className="h-32 bg-gradient-to-r from-techoh-purple/20 to-techoh-blue/20 rounded-t-xl"></div>
-          <div className="p-6">
-            <div className="relative flex flex-col items-center md:flex-row md:items-end">
-              <div className="relative -mt-16 flex items-center justify-center">
-                <Avatar className="h-24 w-24 border-4 border-background">
+      <div className="container max-w-5xl py-12">
+        <div className="flex flex-col gap-8 lg:flex-row">
+          <div className="w-full lg:w-1/3">
+            <Card className="space-y-4">
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <Avatar className="h-24 w-24">
                   <AvatarImage src={userData.avatar} alt={userData.name} />
                   <AvatarFallback>{userData.name.charAt(0)}</AvatarFallback>
                 </Avatar>
+                <h2 className="mt-4 text-2xl font-semibold">{userData.name}</h2>
+                <p className="text-muted-foreground">@{userData.username}</p>
               </div>
-
-              <div className="mt-4 flex flex-1 flex-col items-center md:ml-4 md:items-start">
-                <h1 className="text-center text-2xl font-bold md:text-left">{userData.name}</h1>
-                <p className="text-center text-muted-foreground md:text-left">@{userData.username}</p>
-              </div>
-
-              <div className="mt-4 flex gap-2 md:mt-0">
-                {isCurrentUser ? (
-                  <>
-                    <Button variant="outline" className="gap-1" asChild>
-                      <Link to="/settings">
-                        <Settings size={16} className="mr-1" />
-                        Settings
-                      </Link>
-                    </Button>
-                    <Button className="gap-1" asChild>
-                      <Link to="/create">
-                        <Edit size={16} className="mr-1" />
-                        Edit Profile
-                      </Link>
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant={isFollowing ? "outline" : "default"}
-                    onClick={() => setIsFollowing(!isFollowing)}
-                  >
-                    {isFollowing ? "Following" : "Follow"}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-y-4 gap-x-8">
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <User size={16} />
-                <span>{userData.bio}</span>
-              </div>
-              {userData.location && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin size={16} />
-                  <span>{userData.location}</span>
+              <div className="flex flex-col gap-2 px-6 pb-6">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{userData.location || "Earth"}</span>
                 </div>
-              )}
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Calendar size={16} />
-                <span>Joined {userData.joinedDate}</span>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Joined {userData.joinedDate}</span>
+                </div>
+                <p className="text-sm">{userData.bio || "No bio available."}</p>
+                <div className="mt-4 flex items-center justify-center gap-4">
+                  {isCurrentUser ? (
+                    <Button asChild variant="outline">
+                      <Link to="/edit-profile">Edit Profile</Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline">
+                      <UserPlus className="mr-2 h-4 w-4" /> Follow
+                    </Button>
+                  )}
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+                    <ExternalLink className="mr-1 h-4 w-4" />
+                    Portfolio
+                  </Link>
+                </div>
               </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-4">
-              {userData.website && (
-                <a
-                  href={userData.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-techoh-purple hover:underline"
-                >
-                  <Globe size={16} />
-                  <span>Website</span>
-                </a>
-              )}
-              {userData.twitter && (
-                <a
-                  href={`https://twitter.com/${userData.twitter}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-techoh-purple hover:underline"
-                >
-                  <Twitter size={16} />
-                  <span>Twitter</span>
-                </a>
-              )}
-              {userData.github && (
-                <a
-                  href={`https://github.com/${userData.github}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-techoh-purple hover:underline"
-                >
-                  <Github size={16} />
-                  <span>GitHub</span>
-                </a>
-              )}
-              {userData.linkedin && (
-                <a
-                  href={`https://linkedin.com/in/${userData.linkedin}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-techoh-purple hover:underline"
-                >
-                  <Linkedin size={16} />
-                  <span>LinkedIn</span>
-                </a>
-              )}
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-6">
-              <div className="flex items-center gap-1">
-                <Award size={18} className="text-techoh-accent-purple" />
-                <span className="font-medium">{userData.badges.length} Badges</span>
+            </Card>
+            <Card className="mt-6">
+              <div className="flex flex-col gap-4 p-6">
+                <h3 className="text-xl font-semibold">Badges</h3>
+                <div className="flex gap-2">
+                  {userData.badges && userData.badges.length > 0 ? (
+                    userData.badges.map((badge, index) => (
+                      <Badge key={index}>{badge}</Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No badges earned yet.</p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <BookOpen size={18} className="text-techoh-blue" />
-                <span className="font-medium">{userData.articles} Articles</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Users size={18} className="text-techoh-purple" />
-                <span className="font-medium">{userData.followers} Followers</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <BarChart2 size={18} className="text-techoh-accent-green" />
-                <Link to="/profile/stats" className="font-medium hover:underline">
-                  View Stats
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              {userData.badges.map((badge, index) => (
-                <Badge
-                  key={index}
-                  className="bg-gradient-to-r from-techoh-purple to-techoh-blue text-white"
-                >
-                  {badge.name}
-                </Badge>
-              ))}
-            </div>
+            </Card>
+          </div>
+          <div className="w-full lg:w-2/3">
+            <Tabs defaultValue="articles" className="w-full">
+              <TabsList>
+                <TabsTrigger value="articles">Articles ({userData.articles})</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+              <TabsContent value="articles" className="mt-6">
+                {userArticles.length > 0 ? (
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {userArticles.map((article) => (
+                      <Link
+                        key={article.id}
+                        to={`/article/${article.id}`}
+                        className="group relative overflow-hidden rounded-lg border border-border/50 bg-card transition-all hover:border-border hover:shadow-md"
+                      >
+                        <div className="aspect-video w-full overflow-hidden">
+                          <img
+                            src={article.cover}
+                            alt={article.title}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <div className="mb-3 flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={article.author.avatar} alt={article.author.name} />
+                              <AvatarFallback>{article.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-muted-foreground">{article.author.name}</span>
+                            <span className="text-xs text-muted-foreground">•</span>
+                            <span className="text-sm text-muted-foreground">{article.publishDate}</span>
+                          </div>
+                          <h3 className="mb-2 line-clamp-2 font-semibold">{article.title}</h3>
+                          <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">{article.excerpt}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span>{article.readTime} min read</span>
+                              <span>•</span>
+                              <span>{article.views.toLocaleString()} views</span>
+                            </div>
+                            {article.aiEnhanced && (
+                              <Badge variant="secondary">
+                                <Award className="mr-1.5 h-3 w-3" />
+                                <span>AI Enhanced</span>
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="p-6">
+                    <h3 className="text-lg font-medium">No articles yet</h3>
+                    <p className="text-muted-foreground">This user hasn't published any articles.</p>
+                  </Card>
+                )}
+              </TabsContent>
+              <TabsContent value="activity" className="mt-6">
+                <Card className="p-6">
+                  <h3 className="text-lg font-medium">No activity yet</h3>
+                  <p className="text-muted-foreground">This user hasn't performed any activity yet.</p>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
-
-        {/* Profile content */}
-        <Tabs defaultValue="articles">
-          <TabsList className="mb-8 grid w-full grid-cols-3 sm:w-auto sm:flex">
-            <TabsTrigger value="articles">Articles</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="articles" className="space-y-8">
-            {userArticles.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {userArticles.map((article) => (
-                  <ArticleCard key={article.id} {...article} />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border border-border/40 bg-card p-8 text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                  <PenLine className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="mb-2 text-lg font-medium">No articles yet</h3>
-                <p className="mb-4 text-muted-foreground">
-                  {isCurrentUser
-                    ? "You haven't published any articles yet. Start writing to share your expertise!"
-                    : "This user hasn't published any articles yet."}
-                </p>
-                {isCurrentUser && (
-                  <Button asChild>
-                    <Link to="/create">Write your first article</Link>
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {userArticles.length > 9 && (
-              <div className="flex justify-center">
-                <Button variant="outline">Load More</Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="activity">
-            <div className="rounded-lg border border-border/40 bg-card p-6">
-              <div className="flex items-center justify-center py-12 text-center">
-                <div className="max-w-md">
-                  <Users className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-                  <h3 className="mt-4 text-lg font-medium">Activity timeline coming soon</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    We're working on a beautiful activity timeline to showcase your engagements with the community.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="about">
-            <div className="rounded-lg border border-border/40 bg-card p-6">
-              <h2 className="mb-4 text-xl font-semibold">About {userData.name}</h2>
-              <p className="text-muted-foreground">{userData.bio}</p>
-              
-              <h3 className="mt-6 mb-2 text-lg font-medium">Skills & Expertise</h3>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Kubernetes</Badge>
-                <Badge variant="outline">Go</Badge>
-                <Badge variant="outline">Distributed Systems</Badge>
-                <Badge variant="outline">Cloud Architecture</Badge>
-                <Badge variant="outline">Microservices</Badge>
-                <Badge variant="outline">AWS</Badge>
-                <Badge variant="outline">Docker</Badge>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
       </div>
     </Layout>
   );
