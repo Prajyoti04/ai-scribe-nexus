@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Eye, ThumbsUp, MessageSquare, BookmarkPlus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ArticleCardProps {
   id: string;
@@ -40,6 +42,54 @@ export default function ArticleCard({
   trending,
   aiEnhanced,
 }: ArticleCardProps) {
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if user is authenticated
+    const user = localStorage.getItem("techoh-user");
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to save this article",
+      });
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    // Get saved articles
+    const savedArticles = JSON.parse(localStorage.getItem("techoh-saved-articles") || "[]");
+    
+    // Check if article is already saved
+    const isAlreadySaved = savedArticles.includes(id);
+    
+    if (isAlreadySaved) {
+      // Remove from saved
+      const updatedSavedArticles = savedArticles.filter((articleId: string) => articleId !== id);
+      localStorage.setItem("techoh-saved-articles", JSON.stringify(updatedSavedArticles));
+      
+      toast({
+        title: "Article removed",
+        description: "Article removed from your saved list",
+      });
+    } else {
+      // Add to saved
+      const updatedSavedArticles = [...savedArticles, id];
+      localStorage.setItem("techoh-saved-articles", JSON.stringify(updatedSavedArticles));
+      
+      toast({
+        title: "Article saved",
+        description: "Article saved to your reading list",
+      });
+    }
+    
+    setIsSaving(false);
+  };
+
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border border-border/40 bg-card transition-all duration-200 hover:border-techoh-purple/40 hover:shadow-md">
       {cover && (
@@ -112,7 +162,13 @@ export default function ArticleCard({
               <MessageSquare size={14} />
               {comments}
             </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-7 w-7"
+              onClick={handleBookmark}
+              disabled={isSaving}
+            >
               <BookmarkPlus size={16} />
             </Button>
           </div>

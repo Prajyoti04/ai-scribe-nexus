@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -42,6 +41,7 @@ export default function ArticleView() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -51,8 +51,27 @@ export default function ArticleView() {
       setCurrentUser(JSON.parse(userData));
     }
 
+    // Initialize storage if needed
+    if (!localStorage.getItem("techoh-articles")) {
+      localStorage.setItem("techoh-articles", JSON.stringify([]));
+    }
+    
+    if (!localStorage.getItem("techoh-liked-articles")) {
+      localStorage.setItem("techoh-liked-articles", JSON.stringify([]));
+    }
+    
+    if (!localStorage.getItem("techoh-saved-articles")) {
+      localStorage.setItem("techoh-saved-articles", JSON.stringify([]));
+    }
+
     // Get article from localStorage
     const articles = JSON.parse(localStorage.getItem("techoh-articles") || "[]");
+    
+    if (!id) {
+      navigate("/not-found");
+      return;
+    }
+    
     const foundArticle = articles.find((a: Article) => a.id === id);
     
     if (foundArticle) {
@@ -78,9 +97,34 @@ export default function ArticleView() {
         setIsSaved(savedArticles.includes(id));
       }
     } else {
-      // Article not found, redirect to 404
-      navigate("/not-found");
+      // For demo purposes, create a sample article if not found
+      const demoArticle: Article = {
+        id: id,
+        title: "Building Scalable Microservices with Go and Kubernetes",
+        excerpt: "Learn how to design and implement a highly scalable microservice architecture using Go, Kubernetes, and the latest cloud-native technologies.",
+        cover: "https://images.unsplash.com/photo-1593720219276-0b1eacd0aef4?q=80&w=1080&auto=format&fit=crop",
+        author: {
+          name: "Sarah Johnson",
+          avatar: "https://i.pravatar.cc/150?img=32",
+          id: "sarah-johnson"
+        },
+        publishDate: "Apr 15, 2025",
+        readTime: 12,
+        tags: ["golang", "kubernetes", "microservices", "cloud"],
+        likes: 254,
+        views: 2489,
+        comments: 27,
+        aiEnhanced: true
+      };
+      
+      setArticle(demoArticle);
+      
+      // Add demo article to storage for future viewing
+      const updatedArticles = [...articles, demoArticle];
+      localStorage.setItem("techoh-articles", JSON.stringify(updatedArticles));
     }
+    
+    setIsLoading(false);
   }, [id, navigate, isAuthenticated]);
 
   const handleLike = () => {
@@ -176,10 +220,32 @@ export default function ArticleView() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <Layout isAuthenticated={isAuthenticated}>
+        <div className="container py-12">
+          <div className="flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-techoh-purple border-t-transparent"></div>
+            <span className="ml-2">Loading article...</span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!article) {
     return (
       <Layout isAuthenticated={isAuthenticated}>
-        <div className="container py-12">Loading...</div>
+        <div className="container py-12">
+          <Alert className="mb-4">
+            <AlertDescription>
+              Article not found. It may have been removed or is no longer available.
+            </AlertDescription>
+          </Alert>
+          <Button asChild>
+            <Link to="/">Return to Homepage</Link>
+          </Button>
+        </div>
       </Layout>
     );
   }
