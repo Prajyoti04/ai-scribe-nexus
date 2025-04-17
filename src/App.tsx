@@ -17,11 +17,22 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Initialize articles storage if not exists
+const initializeStorage = () => {
+  // Initialize articles storage
+  if (!localStorage.getItem("techoh-articles")) {
+    localStorage.setItem("techoh-articles", JSON.stringify([]));
+  }
+};
+
 // Protected route component
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   
   useEffect(() => {
+    // Initialize storage on app load
+    initializeStorage();
+    
     const user = localStorage.getItem("techoh-user");
     setIsAuthenticated(!!user);
   }, []);

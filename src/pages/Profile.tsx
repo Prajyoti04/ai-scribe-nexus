@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,65 +58,6 @@ export default function Profile() {
   const [userArticles, setUserArticles] = useState<Article[]>([]);
   const { id } = useParams();
 
-  // Define mock articles for the user
-  const mockArticles = [
-    {
-      id: "1",
-      title: "Getting Started with Kubernetes",
-      excerpt: "A beginner's guide to understanding and deploying Kubernetes clusters",
-      cover: `https://images.unsplash.com/photo-1649972904349-6e44c42644a7`, // Using a placeholder image
-      author: {
-        name: "Sarah Johnson",
-        avatar: "https://i.pravatar.cc/150?img=32",
-        id: "user1"
-      },
-      publishDate: "April 15, 2025",
-      readTime: 7,
-      tags: ["kubernetes", "devops", "cloud"],
-      likes: 142,
-      views: 3526,
-      comments: 24,
-      trending: true,
-      aiEnhanced: true
-    },
-    {
-      id: "2",
-      title: "Advanced React Performance Optimization",
-      excerpt: "Techniques to improve your React application's rendering and load times",
-      cover: `https://images.unsplash.com/photo-1488590528505-98d2b5aba04b`, // Using a placeholder image
-      author: {
-        name: "Sarah Johnson",
-        avatar: "https://i.pravatar.cc/150?img=32",
-        id: "user1"
-      },
-      publishDate: "March 22, 2025",
-      readTime: 5,
-      tags: ["react", "performance", "web-development"],
-      likes: 87,
-      views: 2103,
-      comments: 15,
-      aiEnhanced: true
-    },
-    {
-      id: "3",
-      title: "Building Scalable Microservices with Go",
-      excerpt: "Design patterns and best practices for creating robust microservice architectures",
-      cover: `https://images.unsplash.com/photo-1461749280684-dccba630e2f6`, // Using a placeholder image
-      author: {
-        name: "Sarah Johnson",
-        avatar: "https://i.pravatar.cc/150?img=32",
-        id: "user1"
-      },
-      publishDate: "February 10, 2025",
-      readTime: 9,
-      tags: ["go", "microservices", "backend"],
-      likes: 213,
-      views: 4507,
-      comments: 37,
-      trending: true
-    }
-  ];
-
   useEffect(() => {
     // Get user data from localStorage
     const currentUser = JSON.parse(localStorage.getItem("techoh-user") || "null");
@@ -161,15 +103,28 @@ export default function Profile() {
       }
     }
 
-    // When it's the current user's profile, set the mock articles
-    if (isCurrentUser) {
-      setUserData(prevUser => ({
-        ...prevUser,
-        articles: mockArticles.length
-      }));
-      setUserArticles(mockArticles);
+    // Get user articles from localStorage
+    const storedArticles = localStorage.getItem("techoh-articles");
+    if (storedArticles) {
+      const parsedArticles = JSON.parse(storedArticles);
+      // Filter articles by the user ID we're viewing
+      const userID = id || (currentUser ? currentUser.id : null);
+      if (userID) {
+        const filteredArticles = parsedArticles.filter(
+          (article: Article) => article.author.id === userID
+        );
+        setUserArticles(filteredArticles);
+        
+        // Update article count in user data
+        if (userID) {
+          setUserData(prevUser => ({
+            ...prevUser,
+            articles: filteredArticles.length
+          }));
+        }
+      }
     }
-  }, [id, isCurrentUser]);
+  }, [id]);
 
   return (
     <Layout isAuthenticated={isAuthenticated}>
@@ -232,7 +187,7 @@ export default function Profile() {
           <div className="w-full lg:w-2/3">
             <Tabs defaultValue="articles" className="w-full">
               <TabsList>
-                <TabsTrigger value="articles">Articles ({userData.articles})</TabsTrigger>
+                <TabsTrigger value="articles">Articles ({userData.articles || 0})</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
               </TabsList>
               <TabsContent value="articles" className="mt-6">
@@ -283,7 +238,18 @@ export default function Profile() {
                 ) : (
                   <Card className="p-6">
                     <h3 className="text-lg font-medium">No articles yet</h3>
-                    <p className="text-muted-foreground">This user hasn't published any articles.</p>
+                    <p className="text-muted-foreground">
+                      {isCurrentUser 
+                        ? "You haven't published any articles yet. Click 'New Article' to create your first article!"
+                        : "This user hasn't published any articles yet."}
+                    </p>
+                    {isCurrentUser && (
+                      <div className="mt-4">
+                        <Button asChild>
+                          <Link to="/create">Create New Article</Link>
+                        </Button>
+                      </div>
+                    )}
                   </Card>
                 )}
               </TabsContent>

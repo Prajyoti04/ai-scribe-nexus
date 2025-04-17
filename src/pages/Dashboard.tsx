@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,50 +29,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Mock data for dashboard
-const userStats = {
-  articles: 12,
-  views: 24568,
-  likes: 1256,
-  comments: 87,
-  followers: 342,
-};
-
-const userArticles = [
-  {
-    id: "article1",
-    title: "Building Scalable Microservices with Go and Kubernetes in 2025",
-    excerpt: "Learn how to design and implement a highly scalable microservice architecture using Go, Kubernetes, and the latest cloud-native technologies.",
-    cover: "https://images.unsplash.com/photo-1593720219276-0b1eacd0aef4?q=80&w=1080&auto=format&fit=crop",
-    publishDate: "Apr 15, 2025",
-    status: "published",
-    views: 24689,
-    likes: 1254,
-    comments: 87,
-  },
-  {
-    id: "article2",
-    title: "Advanced TypeScript: Pattern Matching and Discriminated Unions",
-    excerpt: "Master advanced TypeScript patterns to build robust, type-safe applications with modern techniques.",
-    cover: "https://images.unsplash.com/photo-1613068687893-5e85b4638b56?q=80&w=1080&auto=format&fit=crop",
-    publishDate: "Apr 8, 2025", 
-    status: "published",
-    views: 7823,
-    likes: 547,
-    comments: 19,
-  },
-  {
-    id: "article3",
-    title: "The Future of Frontend Development with Web Components",
-    excerpt: "Explore how web components are changing the landscape of frontend development and what it means for your tech stack.",
-    cover: "",
-    publishDate: "", 
-    status: "draft",
-    views: 0,
-    likes: 0,
-    comments: 0,
-  },
-];
+interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  cover: string;
+  author: {
+    name: string;
+    avatar: string;
+    id: string;
+  };
+  publishDate: string;
+  status: string;
+  readTime: number;
+  tags: string[];
+  likes: number;
+  views: number;
+  comments: number;
+  trending?: boolean;
+  aiEnhanced?: boolean;
+}
 
 const recentActivity = [
   {
@@ -106,14 +83,53 @@ const recentActivity = [
 export default function Dashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userArticles, setUserArticles] = useState<Article[]>([]);
+  const [userStats, setUserStats] = useState({
+    articles: 0,
+    views: 0,
+    likes: 0,
+    comments: 0,
+    followers: 0,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is logged in
     const storedUser = localStorage.getItem("techoh-user");
     if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
       setIsAuthenticated(true);
-      setUser(JSON.parse(storedUser));
+      setUser(parsedUser);
+      
+      // Get user articles from localStorage
+      const storedArticles = localStorage.getItem("techoh-articles");
+      if (storedArticles) {
+        const parsedArticles = JSON.parse(storedArticles);
+        // Filter articles by the current user's ID
+        const filteredArticles = parsedArticles.filter(
+          (article: Article) => article.author.id === parsedUser.id
+        );
+        setUserArticles(filteredArticles);
+        
+        // Calculate stats based on user's articles
+        let views = 0;
+        let likes = 0;
+        let comments = 0;
+        
+        filteredArticles.forEach((article: Article) => {
+          views += article.views || 0;
+          likes += article.likes || 0;
+          comments += article.comments || 0;
+        });
+        
+        setUserStats({
+          articles: filteredArticles.length,
+          views,
+          likes,
+          comments,
+          followers: parsedUser.followers || 0,
+        });
+      }
     } else {
       // Redirect to login if not authenticated
       navigate("/login");
@@ -244,39 +260,47 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <h2 className="mb-6 text-xl font-semibold">Recent Activity</h2>
               <div className="space-y-4">
-                {recentActivity.map((activity, i) => (
-                  <div key={i} className="flex gap-4">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={activity.user.avatar} />
-                      <AvatarFallback>{activity.user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                      <p className="text-sm">
-                        <span className="font-medium">{activity.user.name}</span>{" "}
-                        {activity.type === "comment" && "commented on"}
-                        {activity.type === "like" && "liked"}
-                        {activity.type === "follow" && "started following you"}
-                        {activity.articleTitle && (
-                          <span>
-                            {" "}
-                            your article{" "}
-                            <Link to={`/article/1`} className="font-medium hover:underline">
-                              {activity.articleTitle}
-                            </Link>
-                          </span>
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity, i) => (
+                    <div key={i} className="flex gap-4">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={activity.user.avatar} />
+                        <AvatarFallback>{activity.user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <p className="text-sm">
+                          <span className="font-medium">{activity.user.name}</span>{" "}
+                          {activity.type === "comment" && "commented on"}
+                          {activity.type === "like" && "liked"}
+                          {activity.type === "follow" && "started following you"}
+                          {activity.articleTitle && (
+                            <span>
+                              {" "}
+                              your article{" "}
+                              <Link to={`/article/1`} className="font-medium hover:underline">
+                                {activity.articleTitle}
+                              </Link>
+                            </span>
+                          )}
+                        </p>
+                        {activity.content && (
+                          <p className="text-xs text-muted-foreground">{activity.content}</p>
                         )}
-                      </p>
-                      {activity.content && (
-                        <p className="text-xs text-muted-foreground">{activity.content}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <p>No recent activity</p>
                   </div>
-                ))}
+                )}
               </div>
-              <Button variant="ghost" size="sm" className="mt-4 w-full">
-                View all activity
-              </Button>
+              {recentActivity.length > 0 && (
+                <Button variant="ghost" size="sm" className="mt-4 w-full">
+                  View all activity
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -295,111 +319,126 @@ export default function Dashboard() {
                 </Tabs>
               </div>
 
-              <div className="space-y-4">
-                {userArticles.map((article) => (
-                  <div
-                    key={article.id}
-                    className="flex flex-col gap-4 rounded-lg border border-border/40 p-4 sm:flex-row"
-                  >
-                    {article.cover && (
-                      <div className="h-24 w-full overflow-hidden rounded-md sm:h-auto sm:w-36">
-                        <img
-                          src={article.cover}
-                          alt={article.title}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Link
-                          to={`/article/${article.id}`}
-                          className="font-semibold hover:text-primary"
-                        >
-                          {article.title}
-                        </Link>
-                        <Badge
-                          variant={article.status === "published" ? "default" : "outline"}
-                          className={
-                            article.status === "published"
-                              ? "bg-techoh-accent-green"
-                              : ""
-                          }
-                        >
-                          {article.status === "published" ? "Published" : "Draft"}
-                        </Badge>
-                      </div>
-                      <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {article.excerpt}
-                      </p>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                          {article.publishDate && (
-                            <span className="flex items-center">
-                              <CalendarDays size={14} className="mr-1" />
-                              {article.publishDate}
-                            </span>
-                          )}
-                          {article.status === "published" && (
-                            <>
-                              <span className="flex items-center">
-                                <BookOpen size={14} className="mr-1" />
-                                {article.views.toLocaleString()} views
-                              </span>
-                              <span className="flex items-center">
-                                <ThumbsUp size={14} className="mr-1" />
-                                {article.likes.toLocaleString()} likes
-                              </span>
-                              <span className="flex items-center">
-                                <MessagesSquare size={14} className="mr-1" />
-                                {article.comments.toLocaleString()} comments
-                              </span>
-                            </>
-                          )}
+              {userArticles.length > 0 ? (
+                <div className="space-y-4">
+                  {userArticles.map((article) => (
+                    <div
+                      key={article.id}
+                      className="flex flex-col gap-4 rounded-lg border border-border/40 p-4 sm:flex-row"
+                    >
+                      {article.cover && (
+                        <div className="h-24 w-full overflow-hidden rounded-md sm:h-auto sm:w-36">
+                          <img
+                            src={article.cover}
+                            alt={article.title}
+                            className="h-full w-full object-cover"
+                          />
                         </div>
-                        <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" className="h-8" asChild>
-                            <Link to={`/edit/${article.id}`}>
-                              <PenSquare size={14} className="mr-1" />
-                              Edit
-                            </Link>
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <circle cx="12" cy="12" r="1" />
-                                  <circle cx="19" cy="12" r="1" />
-                                  <circle cx="5" cy="12" r="1" />
-                                </svg>
-                                <span className="sr-only">More</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>View Statistics</DropdownMenuItem>
-                              <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                              <DropdownMenuItem>Archive</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Link
+                            to={`/article/${article.id}`}
+                            className="font-semibold hover:text-primary"
+                          >
+                            {article.title}
+                          </Link>
+                          <Badge
+                            variant={article.status === "published" ? "default" : "outline"}
+                            className={
+                              article.status === "published"
+                                ? "bg-techoh-accent-green"
+                                : ""
+                            }
+                          >
+                            {article.status === "published" ? "Published" : "Draft"}
+                          </Badge>
+                        </div>
+                        <p className="line-clamp-2 text-sm text-muted-foreground">
+                          {article.excerpt}
+                        </p>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            {article.publishDate && (
+                              <span className="flex items-center">
+                                <CalendarDays size={14} className="mr-1" />
+                                {article.publishDate}
+                              </span>
+                            )}
+                            {article.status === "published" && (
+                              <>
+                                <span className="flex items-center">
+                                  <BookOpen size={14} className="mr-1" />
+                                  {article.views.toLocaleString()} views
+                                </span>
+                                <span className="flex items-center">
+                                  <ThumbsUp size={14} className="mr-1" />
+                                  {article.likes.toLocaleString()} likes
+                                </span>
+                                <span className="flex items-center">
+                                  <MessagesSquare size={14} className="mr-1" />
+                                  {article.comments.toLocaleString()} comments
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="ghost" size="sm" className="h-8" asChild>
+                              <Link to={`/edit/${article.id}`}>
+                                <PenSquare size={14} className="mr-1" />
+                                Edit
+                              </Link>
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <circle cx="12" cy="12" r="1" />
+                                    <circle cx="19" cy="12" r="1" />
+                                    <circle cx="5" cy="12" r="1" />
+                                  </svg>
+                                  <span className="sr-only">More</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>View Statistics</DropdownMenuItem>
+                                <DropdownMenuItem>Duplicate</DropdownMenuItem>
+                                <DropdownMenuItem>Archive</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="mb-4 rounded-full bg-muted p-6">
+                    <PenSquare className="h-12 w-12 text-muted-foreground" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="mb-2 text-xl font-medium">No Articles Yet</h3>
+                  <p className="mb-6 text-muted-foreground">
+                    You haven't created any articles yet. Start writing your first article!
+                  </p>
+                  <Button asChild>
+                    <Link to="/create">Create New Article</Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
